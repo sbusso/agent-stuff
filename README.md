@@ -2,7 +2,7 @@
 
 This repository is `sbusso`'s personal setup manager for agent skills, extensions, themes, commands, and local helper tooling.
 
-It is the source of truth for my local agent environment. The repo keeps my own assets in one place and can also pull curated upstream skills into the same setup.
+It is the source of truth for my local agent environment. The repo keeps my own assets in one place and installs upstream skill bundles without duplicating them into the local user skill directory.
 
 ## What This Repo Manages
 
@@ -11,7 +11,7 @@ It is the source of truth for my local agent environment. The repo keeps my own 
 - local themes in [`themes`](themes)
 - local commands in [`commands`](commands)
 - sync configuration and install/update entrypoints
-- curated upstream skill sources
+- curated upstream skill bundles
 
 ## Upstream Sources And Credits
 
@@ -40,6 +40,13 @@ AGENT_STUFF_TARGET_ROOT=/path/to/target ./scripts/update
 ```
 
 The upstream and local sync rules live in [`config/sources.json`](config/sources.json).
+
+The install flow keeps responsibilities separate:
+
+- local assets are copied into `~/.pi/agent`
+- upstream bundles are linked under `~/.agents/skills`
+
+This avoids skill collisions between your local skills and separately installed upstream bundles.
 
 ## Skills
 
@@ -72,7 +79,6 @@ Custom extensions for Pi Coding Agent are in [`extensions`](extensions):
 * [`split-fork.ts`](extensions/split-fork.ts) - `/split-fork` command to branch the current session into a new pi process in a right-hand Ghostty split.
 * [`go-to-bed.ts`](extensions/go-to-bed.ts) - Late-night safety guard with explicit confirmation after midnight.
 * [`loop.ts`](extensions/loop.ts) - Prompt loop for rapid iterative coding with optional auto-continue.
-* [`multi-edit.ts`](extensions/multi-edit.ts) - Replaces the built-in `edit` tool with batch `multi` edits and Codex-style `patch` support, including preflight validation.
 * [`notify.ts`](extensions/notify.ts) - Native desktop notifications when the agent finishes.
 * [`prompt-editor.ts`](extensions/prompt-editor.ts) - In-editor prompt mode selector with persistence, history, config, and shortcuts.
 * [`review.ts`](extensions/review.ts) - Code review command (working tree, PR-style diff, commits, custom instructions, optional fix loop).

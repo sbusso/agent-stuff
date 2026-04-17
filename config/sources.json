@@ -1,7 +1,9 @@
 {
   "defaultTargetRoot": "~/.pi/agent",
+  "bundleTargetRoot": "~/.agents/skills",
   "cacheRoot": ".cache/upstreams",
   "stateFile": ".agent-stuff-managed.json",
+  "bundleStateFile": ".agent-stuff-managed.json",
   "localAssets": [
     {
       "name": "skills",
@@ -47,21 +49,7 @@
       "ref": "main",
       "cacheSubdir": "superpowers",
       "sourceBase": "skills",
-      "destination": "skills",
-      "entries": [
-        "brainstorming",
-        "dispatching-parallel-agents",
-        "executing-plans",
-        "receiving-code-review",
-        "requesting-code-review",
-        "subagent-driven-development",
-        "systematic-debugging",
-        "test-driven-development",
-        "using-git-worktrees",
-        "using-superpowers",
-        "verification-before-completion",
-        "writing-plans"
-      ]
+      "bundleName": "superpowers"
     },
     {
       "name": "cloudflare-skills",
@@ -69,16 +57,7 @@
       "ref": "main",
       "cacheSubdir": "cloudflare-skills",
       "sourceBase": "skills",
-      "destination": "skills",
-      "entries": [
-        "agents-sdk",
-        "cloudflare",
-        "durable-objects",
-        "sandbox-sdk",
-        "web-perf",
-        "workers-best-practices",
-        "wrangler"
-      ]
+      "bundleName": "cloudflare-skills"
     }
   ]
 }

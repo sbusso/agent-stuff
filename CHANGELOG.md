@@ -7,6 +7,8 @@ All notable changes to agent-stuff are documented here.
 * Reframed the repo as `sbusso`'s personal setup manager instead of the old published-package identity.
 * Added manifest-driven install/update infrastructure for syncing local assets and curated upstream skills.
 * Added a `self-update` skill that points agents at the repo-managed refresh flow.
+* Removed the `multi-edit` extension from the personal setup package and sync flow.
+* Stopped copying upstream skill bundles into `~/.pi/agent/skills` and now manage them separately under `~/.agents/skills` to avoid collisions.
 * Fixed `intercepted-commands/python` and `intercepted-commands/python3` to avoid recursive `uv` spawn loops by resolving a uv-managed non-shim interpreter for `uv run --python`.
 
 ## 1.5.0

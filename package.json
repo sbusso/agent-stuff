@@ -29,9 +29,6 @@
       "./commands"
     ]
   },
-  "dependencies": {
-    "diff": "^8.0.2"
-  },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",
     "@mariozechner/pi-ai": "*",

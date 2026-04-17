@@ -78,6 +78,34 @@ function removePath(targetPath, dryRun, actions) {
   fs.rmSync(targetPath, { recursive: true, force: true });
 }
 
+function ensureSymlink(sourcePath, destinationPath, dryRun, actions) {
+  if (dryRun) {
+    actions.push(`symlink ${destinationPath} -> ${sourcePath}`);
+    return "linked";
+  }
+
+  fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+
+  try {
+    const existing = fs.lstatSync(destinationPath);
+    if (existing.isSymbolicLink()) {
+      const currentTarget = fs.readlinkSync(destinationPath);
+      const resolvedTarget = path.resolve(path.dirname(destinationPath), currentTarget);
+      if (resolvedTarget === sourcePath) {
+        return "unchanged";
+      }
+    }
+    fs.rmSync(destinationPath, { recursive: true, force: true });
+  } catch (error) {
+    if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
+      throw error;
+    }
+  }
+
+  fs.symlinkSync(sourcePath, destinationPath);
+  return "linked";
+}
+
 function copyEntry(sourcePath, destinationPath, dryRun, actions) {
   if (dryRun) {
     actions.push(`copy ${sourcePath} -> ${destinationPath}`);
@@ -148,28 +176,23 @@ function collectLocalEntries(config) {
   return entries;
 }
 
-function collectUpstreamEntries(config, cacheRoot, dryRun, actions) {
-  const entries = [];
+function collectUpstreamBundles(config, cacheRoot, dryRun, actions) {
+  const bundles = [];
 
   for (const upstream of config.upstreams) {
     const checkoutPath = ensureUpstreamCheckout(upstream, cacheRoot, dryRun, actions);
-    const sourceBase = path.join(checkoutPath, upstream.sourceBase);
-
-    for (const entry of upstream.entries) {
-      const sourcePath = path.join(sourceBase, entry);
-      if (!dryRun && !fs.existsSync(sourcePath)) {
-        throw new Error(`Upstream entry not found: ${sourcePath}`);
-      }
-      entries.push({
-        kind: "upstream",
-        label: `${upstream.name}:${entry}`,
-        sourcePath,
-        relativeDestination: path.join(upstream.destination, entry)
-      });
+    const sourcePath = path.join(checkoutPath, upstream.sourceBase);
+    if (!dryRun && !fs.existsSync(sourcePath)) {
+      throw new Error(`Upstream source base not found: ${sourcePath}`);
     }
+
+    bundles.push({
+      name: upstream.bundleName || upstream.name,
+      sourcePath
+    });
   }
 
-  return entries;
+  return bundles;
 }
 
 function readPreviousState(statePath) {
@@ -188,29 +211,17 @@ function writeState(statePath, state, dryRun, actions) {
   fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
 }
 
-function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const config = readConfig();
-  const targetRoot = path.resolve(expandHome(process.env.AGENT_STUFF_TARGET_ROOT || config.defaultTargetRoot));
-  const cacheRoot = path.resolve(repoRoot, config.cacheRoot);
-  const statePath = path.join(targetRoot, config.stateFile);
-  const actions = [];
-
-  ensureCommand("git");
-
-  const upstreamEntries = collectUpstreamEntries(config, cacheRoot, args.dryRun, actions);
-  const localEntries = collectLocalEntries(config);
-  const desiredEntries = [...upstreamEntries, ...localEntries];
+function syncManagedCopies(targetRoot, desiredEntries, statePath, mode, dryRun, actions) {
   const desiredPaths = desiredEntries.map((entry) => entry.relativeDestination).sort((a, b) => a.localeCompare(b));
 
-  ensureDir(targetRoot, args.dryRun, actions);
+  ensureDir(targetRoot, dryRun, actions);
 
   for (const entry of desiredEntries) {
     const destinationPath = path.join(targetRoot, entry.relativeDestination);
-    copyEntry(entry.sourcePath, destinationPath, args.dryRun, actions);
+    copyEntry(entry.sourcePath, destinationPath, dryRun, actions);
   }
 
-  if (args.mode === "update") {
+  if (mode === "update") {
     const previousState = readPreviousState(statePath);
     const desiredSet = new Set(desiredPaths);
     const stalePaths = previousState.managedPaths
@@ -218,7 +229,7 @@ function main() {
       .sort((a, b) => a.localeCompare(b));
 
     for (const stalePath of stalePaths) {
-      removePath(path.join(targetRoot, stalePath), args.dryRun, actions);
+      removePath(path.join(targetRoot, stalePath), dryRun, actions);
     }
   }
 
@@ -230,14 +241,88 @@ function main() {
       updatedAt: new Date().toISOString(),
       managedPaths: desiredPaths
     },
-    args.dryRun,
+    dryRun,
     actions
   );
 
+  return desiredPaths;
+}
+
+function syncManagedBundles(bundleRoot, bundles, statePath, mode, dryRun, actions) {
+  const desiredPaths = bundles.map((bundle) => bundle.name).sort((a, b) => a.localeCompare(b));
+
+  ensureDir(bundleRoot, dryRun, actions);
+
+  const previousState = readPreviousState(statePath);
+  const previouslyManaged = new Set(previousState.managedPaths || []);
+
+  for (const bundle of bundles) {
+    const destinationPath = path.join(bundleRoot, bundle.name);
+    if (!dryRun && fs.existsSync(destinationPath) && !previouslyManaged.has(bundle.name)) {
+      const existingStat = fs.lstatSync(destinationPath);
+      if (!existingStat.isSymbolicLink()) {
+        actions.push(`skip-existing ${destinationPath}`);
+        continue;
+      }
+      const currentTarget = fs.readlinkSync(destinationPath);
+      const resolvedTarget = path.resolve(path.dirname(destinationPath), currentTarget);
+      if (resolvedTarget !== bundle.sourcePath) {
+        actions.push(`skip-existing ${destinationPath}`);
+        continue;
+      }
+    }
+
+    ensureSymlink(bundle.sourcePath, destinationPath, dryRun, actions);
+  }
+
+  if (mode === "update") {
+    const desiredSet = new Set(desiredPaths);
+    const stalePaths = (previousState.managedPaths || [])
+      .filter((relativePath) => !desiredSet.has(relativePath))
+      .sort((a, b) => a.localeCompare(b));
+
+    for (const stalePath of stalePaths) {
+      removePath(path.join(bundleRoot, stalePath), dryRun, actions);
+    }
+  }
+
+  writeState(
+    statePath,
+    {
+      repoRoot,
+      targetRoot: bundleRoot,
+      updatedAt: new Date().toISOString(),
+      managedPaths: desiredPaths
+    },
+    dryRun,
+    actions
+  );
+
+  return desiredPaths;
+}
+
+function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const config = readConfig();
+  const targetRoot = path.resolve(expandHome(process.env.AGENT_STUFF_TARGET_ROOT || config.defaultTargetRoot));
+  const bundleRoot = path.resolve(expandHome(process.env.AGENT_STUFF_BUNDLE_ROOT || config.bundleTargetRoot));
+  const cacheRoot = path.resolve(repoRoot, config.cacheRoot);
+  const statePath = path.join(targetRoot, config.stateFile);
+  const bundleStatePath = path.join(bundleRoot, config.bundleStateFile);
+  const actions = [];
+
+  ensureCommand("git");
+
+  const upstreamBundles = collectUpstreamBundles(config, cacheRoot, args.dryRun, actions);
+  const localEntries = collectLocalEntries(config);
+  const desiredPaths = syncManagedCopies(targetRoot, localEntries, statePath, args.mode, args.dryRun, actions);
+  const desiredBundles = syncManagedBundles(bundleRoot, upstreamBundles, bundleStatePath, args.mode, args.dryRun, actions);
+
   console.log(`mode: ${args.mode}`);
   console.log(`target: ${targetRoot}`);
-  console.log(`managed entries: ${desiredEntries.length}`);
-  console.log(`upstreams: ${config.upstreams.map((upstream) => upstream.name).join(", ")}`);
+  console.log(`managed local entries: ${desiredPaths.length}`);
+  console.log(`bundle target: ${bundleRoot}`);
+  console.log(`managed bundles: ${desiredBundles.join(", ")}`);
 
   if (actions.length > 0) {
     console.log("actions:");
