@@ -4,7 +4,7 @@
   "description": "Armin's pi coding agent commands, skills, extensions, and themes",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mitsuhiko/agent-stuff.git"
+    "url": "https://github.com/sbusso/agent-stuff.git"
   },
   "readme": "README.md",
   "type": "module",
