@@ -1,9 +1,9 @@
 /**
  * UV Extension - Redirects Python tooling to uv equivalents
  *
- * This extension wraps the bash tool to prepend intercepted-commands to PATH,
- * which contains shim scripts that intercept common Python tooling commands
- * and redirect agents to use uv instead.
+ * This extension intercepts bash tool calls to prepend intercepted-commands to
+ * PATH, which contains shim scripts that redirect common Python tooling toward
+ * uv-friendly workflows.
  *
  * Intercepted commands:
  * - pip/pip3: Blocked with suggestions to use `uv add` or `uv run --with`
@@ -17,11 +17,14 @@
  *
  * Note: PATH shims are bypassable via explicit interpreter paths
  * (for example `.venv/bin/python`). To close that gap, this extension also
- * blocks disallowed invocations at bash spawn time.
+ * blocks disallowed invocations at bash tool-call time.
+ *
+ * Important: this extension does not override the built-in `bash` tool. That
+ * keeps it compatible with other extensions such as `ssh.ts` that also need to
+ * customize bash execution.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { createBashTool } from "@mariozechner/pi-coding-agent";
+import { isToolCallEventType, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -107,17 +110,17 @@ function getBlockedCommandMessage(command: string): string | null {
 }
 
 export default function (pi: ExtensionAPI) {
-  const cwd = process.cwd();
-  const bashTool = createBashTool(cwd, {
-    commandPrefix: `export PATH="${interceptedCommandsPath}:$PATH"`,
-    spawnHook: (ctx) => {
-      const blockedMessage = getBlockedCommandMessage(ctx.command);
-      if (blockedMessage) {
-        throw new Error(blockedMessage);
-      }
-      return ctx;
-    },
-  });
+  pi.on("tool_call", async (event) => {
+    if (!isToolCallEventType("bash", event)) return;
 
-  pi.registerTool(bashTool);
+    const blockedMessage = getBlockedCommandMessage(event.input.command);
+    if (blockedMessage) {
+      return { block: true, reason: blockedMessage };
+    }
+
+    const sshTarget = pi.getFlag("ssh") as string | undefined;
+    if (sshTarget) return;
+
+    event.input.command = `export PATH="${interceptedCommandsPath}:$PATH"\n${event.input.command}`;
+  });
 }
