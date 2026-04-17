@@ -4,6 +4,9 @@ All notable changes to agent-stuff are documented here.
 
 ## Unreleased
 
+* Reframed the repo as `sbusso`'s personal setup manager instead of the old published-package identity.
+* Added manifest-driven install/update infrastructure for syncing local assets and curated upstream skills.
+* Added a `self-update` skill that points agents at the repo-managed refresh flow.
 * Fixed `intercepted-commands/python` and `intercepted-commands/python3` to avoid recursive `uv` spawn loops by resolving a uv-managed non-shim interpreter for `uv run --python`.
 
 ## 1.5.0

@@ -1,26 +1,58 @@
 # Agent Stuff
 
-This repository contains skills and extensions that I use across projects. Note that I often fine-tune these for specific repos, so some items may need small adjustments before reuse.
+This repository is `sbusso`'s personal setup manager for agent skills, extensions, themes, commands, and local helper tooling.
 
-It is released on npm as `mitsupi` for use with the [Pi](https://buildwithpi.ai/) package loader.
+It is the source of truth for my local agent environment. The repo keeps my own assets in one place and can also pull curated upstream skills into the same setup.
+
+## What This Repo Manages
+
+- local skills in [`skills`](skills)
+- local extensions in [`extensions`](extensions)
+- local themes in [`themes`](themes)
+- local commands in [`commands`](commands)
+- sync configuration and install/update entrypoints
+- curated upstream skill sources
+
+## Upstream Sources And Credits
+
+This repo is customized from the original author setup and intentionally preserves credit rather than pretending imported work is original.
+
+- Original author reference: Armin's `mitsupi` setup, which this repo was forked from and adapted for personal use
+- Workflow/process skills: [`obra/superpowers`](https://github.com/obra/superpowers)
+- Cloudflare platform skills: [`cloudflare/skills`](https://github.com/cloudflare/skills)
+
+Imported upstream skills should remain credited to their source repositories in documentation and config.
+
+## Install And Update
+
+Use the repo-managed entrypoints:
+
+```bash
+./scripts/install
+./scripts/update
+```
+
+Both commands support installing into an alternate target root:
+
+```bash
+AGENT_STUFF_TARGET_ROOT=/path/to/target ./scripts/install
+AGENT_STUFF_TARGET_ROOT=/path/to/target ./scripts/update
+```
+
+The upstream and local sync rules live in [`config/sources.json`](config/sources.json).
 
 ## Skills
 
-All skills live in the [`skills`](skills) folder:
+Local skills live in the [`skills`](skills) folder:
 
-* [`/anachb`](skills/anachb) - Query Austrian public transport (VOR AnachB) for departures, routes, and disruptions.
-* [`/apple-mail`](skills/apple-mail) - Search/read Apple Mail local storage and extract attachments.
 * [`/commit`](skills/commit) - Create git commits using concise Conventional Commits-style subjects.
 * [`/frontend-design`](skills/frontend-design) - Design and implement distinctive frontend interfaces.
-* [`/ghidra`](skills/ghidra) - Reverse engineer binaries using Ghidra's headless analyzer.
 * [`/github`](skills/github) - Interact with GitHub using the `gh` CLI (issues, PRs, runs, APIs).
-* [`/google-workspace`](skills/google-workspace) - Access Google Workspace APIs via local helper scripts.
 * [`/librarian`](skills/librarian) - Cache and refresh remote git repositories in `~/.cache/checkouts`.
-* [`/mermaid`](skills/mermaid) - Create and validate Mermaid diagrams with Mermaid CLI tooling.
 * [`/native-web-search`](skills/native-web-search) - Trigger native web search with concise summaries and source URLs.
-* [`/oebb-scotty`](skills/oebb-scotty) - Plan Austrian rail journeys via ÖBB Scotty API.
 * [`/openscad`](skills/openscad) - Create/render OpenSCAD models and export STL files.
 * [`/pi-share`](skills/pi-share) - Load and parse session transcripts from shittycodingagent.ai/buildwithpi/pi.dev URLs.
+* [`/self-update`](skills/self-update) - Refresh this local setup through the repo-managed update flow.
 * [`/sentry`](skills/sentry) - Fetch and analyze Sentry issues, events, transactions, and logs.
 * [`/summarize`](skills/summarize) - Convert files/URLs to Markdown via `uvx markitdown` and summarize.
 * [`/tmux`](skills/tmux) - Drive tmux sessions via keystrokes and pane output scraping.
@@ -55,18 +87,15 @@ Custom themes are in [`themes`](themes):
 
 * [`nightowl.json`](themes/nightowl.json) - Night Owl-inspired theme.
 
-## Distributions
-
-This repo also contains distribution packages in [`distributions`](distributions):
-
-* [`mitsupi-common`](distributions/mitsupi-common) - Minimal/default set (all resources except `anachb`, `apple-mail`, `oebb-scotty`, `openscad`, and `go-to-bed`).
-* [`mitsupi-loaded`](distributions/mitsupi-loaded) - Add-on package that provides `anachb`, `apple-mail`, `oebb-scotty`, `openscad`, and `go-to-bed`.
-
 ## Plumbing Commands
 
 These command files need customization before use. They live in [`plumbing-commands`](plumbing-commands):
 
 * [`/make-release`](plumbing-commands/make-release.md) - Automates repository release with version management.
+
+## Legacy Packaging
+
+The [`distributions`](distributions) directory is currently retained as legacy packaging from the forked setup. It is no longer the primary installation path for this repo.
 
 ## Intercepted Commands
 

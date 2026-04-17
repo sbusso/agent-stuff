@@ -1,7 +1,8 @@
 {
-  "name": "mitsupi",
+  "name": "agent-stuff",
   "version": "1.5.0",
-  "description": "Armin's pi coding agent commands, skills, extensions, and themes",
+  "description": "sbusso's personal agent setup manager for skills, extensions, and local tooling",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/sbusso/agent-stuff.git"
