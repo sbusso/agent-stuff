@@ -76,13 +76,16 @@ Custom extensions for Pi Coding Agent are in [`extensions`](extensions):
 * [`context.ts`](extensions/context.ts) - Context breakdown (extensions, skills, AGENTS.md/CLAUDE.md) + token usage, including loaded-skill highlighting.
 * [`control.ts`](extensions/control.ts) - Session control helpers (list controllable sessions, etc.).
 * [`files.ts`](extensions/files.ts) - Unified file browser with git status + session references and reveal/open/edit/diff actions.
-* [`split-fork.ts`](extensions/split-fork.ts) - `/split-fork` command to branch the current session into a new pi process in a right-hand Ghostty split.
 * [`go-to-bed.ts`](extensions/go-to-bed.ts) - Late-night safety guard with explicit confirmation after midnight.
 * [`loop.ts`](extensions/loop.ts) - Prompt loop for rapid iterative coding with optional auto-continue.
 * [`notify.ts`](extensions/notify.ts) - Native desktop notifications when the agent finishes.
+* [`plan-mode`](extensions/plan-mode) - Official Pi plan-mode extension for read-only exploration and plan execution workflows.
 * [`prompt-editor.ts`](extensions/prompt-editor.ts) - In-editor prompt mode selector with persistence, history, config, and shortcuts.
 * [`review.ts`](extensions/review.ts) - Code review command (working tree, PR-style diff, commits, custom instructions, optional fix loop).
 * [`session-breakdown.ts`](extensions/session-breakdown.ts) - TUI for 7/30/90-day session and cost analysis with usage graph.
+* [`split-fork.ts`](extensions/split-fork.ts) - `/split-fork` command to branch the current session into a new pi process in a right-hand Ghostty split.
+* [`ssh.ts`](extensions/ssh.ts) - Official Pi SSH remote execution extension for read/write/edit/bash delegation.
+* [`subagent`](extensions/subagent) - Official Pi subagent extension with bundled agents and workflow prompts.
 * [`todos.ts`](extensions/todos.ts) - Todo manager extension with file-backed storage and TUI.
 * [`uv.ts`](extensions/uv.ts) - Helpers for uv-based Python workflows.
 * [`whimsical.ts`](extensions/whimsical.ts) - Replaces the default thinking message with random whimsical phrases.
