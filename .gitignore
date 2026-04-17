@@ -1,4 +1,5 @@
 node_modules
 .cache
 .pi/todos
+.worktrees
 *.profraw
